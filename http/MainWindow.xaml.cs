@@ -10,35 +10,33 @@ namespace http;
 public partial class MainWindow : Window
 {
 
-    List<User> Users;
+    private List<User> Users;
+    private HttpClient _client;
+    private int _num = 1;
     public MainWindow()
     {
         InitializeComponent();
         Users = [];
-        listView.ItemsSource = Users;//!------------------------
-
+        _client = new HttpClient();
     }
 
     private async void AddOrUpdate(object sender, RoutedEventArgs e) // add | update
     {
         try
         {
-
-            var client = new HttpClient();
-
-            var user = new User { Id = Users.Count + 1, Name = name.Text, Surname = surname.Text, Age = Convert.ToInt16(age.Text) };
+            var user = new User { Id = _num++, Name = name.Text, Surname = surname.Text, Age = Convert.ToInt16(age.Text) };
 
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await client.PostAsync("http://localhost:27001/", content); // Posting to Server
-            Users.Add(user);
+            HttpResponseMessage response = await _client.PostAsync("http://localhost:27001/", content); // Posting to Server
             var responseString = await response.Content.ReadAsStringAsync(); // Reading back Response from Server (Status posting)
 
+
             if (responseString is not null)
-                MessageBox.Show("Response from server: " + responseString + ' ' + DateTime.Now.ToLongTimeString());
+                MessageBox.Show(DateTime.Now.ToLongTimeString() + " Response from server: " + responseString);
             else
-                MessageBox.Show("Response from server: NULL " + DateTime.Now.ToLongTimeString());
+                MessageBox.Show(DateTime.Now.ToLongTimeString() + " Response from server: NULL");
 
         }
         catch (Exception ex)
@@ -51,8 +49,36 @@ public partial class MainWindow : Window
     {
         try
         {
-            //var str = await client.GetStringAsync("http://localhost:27001/");
-            //MessageBox.Show(str);
+            HttpResponseMessage response = await _client.GetAsync("http://localhost:27001/");
+
+            var responseString = await response.Content.ReadAsStringAsync(); // Reading back Response from Server (Status getting)
+
+            if (responseString is not null)
+                MessageBox.Show("Response from server: " + DateTime.Now.ToLongTimeString());
+            else
+                MessageBox.Show(DateTime.Now.ToLongTimeString() + " Response from server: NULL");
+            if (responseString is not null)
+            {
+                var splitedResponseString_ = responseString.Split('_');
+
+                Users.Clear();
+
+                for (int j = 0; j < splitedResponseString_.Length; j++)
+                {
+                    //MessageBox.Show(splitedResponseString_[j].Split('-')[1].Trim(':')[1].ToString());
+
+                    Users.Add(new User
+                    {
+                        Id = Convert.ToInt32(splitedResponseString_[j].Split('-')[0].Split(':')[1]),
+                        Name = splitedResponseString_[j].Split('-')[1].Split(':')[1].ToString(),
+                        Surname = splitedResponseString_[j].Split('-')[2].Split(':')[1].ToString(),
+                        Age = Convert.ToInt32(splitedResponseString_[j].Split('-')[3].Split(':')[1])
+                    });
+                }
+                listView.ItemsSource = null;
+                listView.Items.Clear();
+                listView.ItemsSource = Users;
+            }
         }
         catch (Exception ex)
         {
