@@ -11,11 +11,13 @@ public class WebHost
     private delegate void MyDelegate(HttpListenerContext context);
 
     private List<MyDelegate> _delegates;
+    List<User> Users;
 
     public WebHost(int port)
     {
         _port = port;
         _delegates = [];
+        Users = [];
         //_delegates.Append(HandleRequest);
 
     }
@@ -23,13 +25,13 @@ public class WebHost
 
     //obj[0].Invoke(null);
 
-    public void Run()
+    public void Start()
     {
         _listener = new HttpListener();
         _listener.Prefixes.Add($"http://localhost:{_port}/");
         _listener.Start();
 
-        Console.WriteLine($"Http server started on {_port}");
+        Console.WriteLine($"Http server started on {_port}\n");
 
         while (true)
         {
@@ -54,19 +56,20 @@ public class WebHost
     {
         try
         {
-            // Read the request body asynchronously
+            // Reading the request body asynchronously
             using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
             {
                 string requestBody = await reader.ReadToEndAsync();
-                Console.WriteLine("Request Body: " + requestBody); // Request's full body
+                //Console.WriteLine("Request Body: " + requestBody); // Request's full body
 
                 var user = JsonSerializer.Deserialize<User>(requestBody);
                 if (user is not null)
                     Console.WriteLine($"Received User: Id={user.Id}, Name={user.Name}, Surname={user.Surname}, Age={user.Age}");
+                Users.Add(user!);
             }
             // READING ENDED
 
-            // Respond to the client
+            // Respond message to the Client
             HttpListenerResponse responseToClient = context.Response;
             responseToClient.ContentType = "application/json";
             responseToClient.ContentEncoding = System.Text.Encoding.UTF8;
@@ -78,12 +81,13 @@ public class WebHost
             await responseToClient.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             responseToClient.OutputStream.Close();
 
-            Console.WriteLine("Response sent...\t\t" + DateTime.Now.ToLongTimeString());
+            Console.WriteLine("Response message to the Client sent at " + DateTime.Now.ToLongTimeString() + '\n');
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error processing request: {ex.Message}");
         }
+
 
     }
 }

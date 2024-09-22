@@ -9,9 +9,14 @@ namespace http;
 
 public partial class MainWindow : Window
 {
+
+    List<User> Users;
     public MainWindow()
     {
         InitializeComponent();
+        Users = [];
+        listView.ItemsSource = Users;//!------------------------
+
     }
 
     private async void AddOrUpdate(object sender, RoutedEventArgs e) // add | update
@@ -21,12 +26,14 @@ public partial class MainWindow : Window
 
             var client = new HttpClient();
 
-            var json = JsonSerializer.Serialize(new User { Id = 1, Name = "John", Surname = "Doe", Age = 30 });
+            var user = new User { Id = Users.Count + 1, Name = name.Text, Surname = surname.Text, Age = Convert.ToInt16(age.Text) };
+
+            var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await client.PostAsync("http://localhost:27001/", content); // Posting to Server
-
-            var responseString = await response.Content.ReadAsStringAsync();
+            Users.Add(user);
+            var responseString = await response.Content.ReadAsStringAsync(); // Reading back Response from Server (Status posting)
 
             if (responseString is not null)
                 MessageBox.Show("Response from server: " + responseString + ' ' + DateTime.Now.ToLongTimeString());
@@ -40,7 +47,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void GetAllUsers(object sender, RoutedEventArgs e) // get all users
+    private async void GetAllUsers(object sender, RoutedEventArgs e) // get all users
     {
         try
         {

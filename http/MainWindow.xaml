@@ -19,7 +19,7 @@
                     FontWeight="Bold">
                     ------------------------------------------USERS------------------------------------------
                 </TextBlock>
-                <ListView Height="350" />
+                <ListView x:Name="listView" Height="350" />
             </StackPanel>
             <StackPanel
                 Width="150"
